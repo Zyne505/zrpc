@@ -62,22 +62,9 @@ See [SECURITY.md](SECURITY.md) for the full model and limits.
 Requirements: JDK 17, Android SDK 35.
 
 ```bash
-./gradlew :app:testDebugUnitTest   # 33 unit tests
+./gradlew :app:testDebugUnitTest   # 43 unit tests
 ./gradlew :app:assembleDebug       # app/build/outputs/apk/debug/
 ```
-
-### Releasing
-
-Push a tag like `v1.0.0`. The workflow builds a minified, signed APK and attaches it with SHA-256 checksums. Add these repository secrets first:
-
-| Secret | Value |
-| --- | --- |
-| `KEYSTORE_BASE64` | `base64 -w0 release.jks` |
-| `KEYSTORE_PASSWORD` | keystore password |
-| `KEY_ALIAS` | key alias |
-| `KEY_PASSWORD` | key password |
-
-Create a keystore once with `keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias zrpc`. Never commit it (`*.jks` is git-ignored).
 
 ## Project layout
 
