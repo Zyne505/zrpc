@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zrpc</string>
+    <string name="notif_channel_name">Rich Presence</string>
+    <string name="notif_channel_desc">Shown while a Rich Presence is active</string>
+    <string name="notif_stop">Stop</string>
+    <string name="unlock_title">Unlock Zrpc</string>
+    <string name="unlock_subtitle">Your Discord token is protected</string>
+    <string name="reveal_title">Confirm it\'s you</string>
+    <string name="reveal_subtitle">Required to reveal or copy your token</string>
+</resources>

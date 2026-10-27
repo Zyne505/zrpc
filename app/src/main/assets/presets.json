@@ -1,0 +1,323 @@
+[
+ {
+  "title": "Coding",
+  "config": {
+   "name": "Visual Studio Code",
+   "type": 0,
+   "details": "Editing a Kotlin file",
+   "state": "Workspace: side project",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Studying",
+  "config": {
+   "name": "Studying",
+   "type": 0,
+   "details": "Deep focus mode",
+   "state": "Do not disturb",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Sleeping",
+  "config": {
+   "name": "Sleep",
+   "type": 0,
+   "details": "Zzz...",
+   "state": "Back in the morning",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Reading",
+  "config": {
+   "name": "a book",
+   "type": 0,
+   "details": "Reading",
+   "state": "One more chapter",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Gym",
+  "config": {
+   "name": "the gym",
+   "type": 5,
+   "details": "Leg day",
+   "state": "No excuses",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Cooking",
+  "config": {
+   "name": "the kitchen",
+   "type": 0,
+   "details": "Cooking dinner",
+   "state": "Something smells good",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Homework",
+  "config": {
+   "name": "Homework",
+   "type": 0,
+   "details": "Grinding assignments",
+   "state": "Send help",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Drawing",
+  "config": {
+   "name": "Procreate",
+   "type": 0,
+   "details": "Sketching",
+   "state": "Work in progress",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Music production",
+  "config": {
+   "name": "FL Studio",
+   "type": 0,
+   "details": "Making a beat",
+   "state": "120 BPM",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Anime",
+  "config": {
+   "name": "Anime",
+   "type": 3,
+   "details": "Binge-watching",
+   "state": "Just one more episode",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Movie night",
+  "config": {
+   "name": "a movie",
+   "type": 3,
+   "details": "Movie night",
+   "state": "Popcorn ready",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "YouTube",
+  "config": {
+   "name": "YouTube",
+   "type": 3,
+   "details": "Watching videos",
+   "state": "Down the rabbit hole",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Twitch",
+  "config": {
+   "name": "Twitch",
+   "type": 3,
+   "details": "Watching a stream",
+   "state": "Chat is wild",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Spotify",
+  "config": {
+   "name": "Spotify",
+   "type": 2,
+   "details": "Lo-fi beats",
+   "state": "to relax/study to",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Podcast",
+  "config": {
+   "name": "a podcast",
+   "type": 2,
+   "details": "Listening to a podcast",
+   "state": "Episode in progress",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Minecraft",
+  "config": {
+   "name": "Minecraft",
+   "type": 0,
+   "details": "Survival mode",
+   "state": "Building a base",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Valorant",
+  "config": {
+   "name": "VALORANT",
+   "type": 0,
+   "details": "Competitive",
+   "state": "In a match",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Fortnite",
+  "config": {
+   "name": "Fortnite",
+   "type": 0,
+   "details": "Battle Royale",
+   "state": "Squads",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Genshin Impact",
+  "config": {
+   "name": "Genshin Impact",
+   "type": 0,
+   "details": "Exploring Teyvat",
+   "state": "Adventure Rank 55",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Honkai: Star Rail",
+  "config": {
+   "name": "Honkai: Star Rail",
+   "type": 0,
+   "details": "Trailblazing",
+   "state": "Simulated Universe",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "PUBG Mobile",
+  "config": {
+   "name": "PUBG MOBILE",
+   "type": 0,
+   "details": "Classic mode",
+   "state": "Erangel",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Free Fire",
+  "config": {
+   "name": "Free Fire",
+   "type": 0,
+   "details": "Battle Royale",
+   "state": "Squad",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Clash Royale",
+  "config": {
+   "name": "Clash Royale",
+   "type": 0,
+   "details": "Ladder",
+   "state": "Pushing trophies",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Roblox",
+  "config": {
+   "name": "Roblox",
+   "type": 0,
+   "details": "Playing an experience",
+   "state": "With friends",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Among Us",
+  "config": {
+   "name": "Among Us",
+   "type": 0,
+   "details": "In lobby",
+   "state": "Sus",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "League of Legends",
+  "config": {
+   "name": "League of Legends",
+   "type": 0,
+   "details": "Ranked Solo/Duo",
+   "state": "In game",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Chess",
+  "config": {
+   "name": "Chess",
+   "type": 5,
+   "details": "Rapid 10+0",
+   "state": "Thinking...",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Pokemon GO",
+  "config": {
+   "name": "Pokemon GO",
+   "type": 0,
+   "details": "Catching Pokemon",
+   "state": "Out for a walk",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Elden Ring",
+  "config": {
+   "name": "ELDEN RING",
+   "type": 0,
+   "details": "Exploring the Lands Between",
+   "state": "Dying a lot",
+   "timestamps": true
+  }
+ },
+ {
+  "title": "Streaming",
+  "config": {
+   "name": "Live now",
+   "type": 1,
+   "details": "Streaming",
+   "state": "Come say hi",
+   "timestamps": true,
+   "streamUrl": "https://twitch.tv/"
+  }
+ },
+ {
+  "title": "AFK",
+  "config": {
+   "name": "AFK",
+   "type": 0,
+   "details": "Away from keyboard",
+   "state": "Back soon",
+   "timestamps": false
+  }
+ },
+ {
+  "title": "Custom status",
+  "config": {
+   "name": "Zrpc",
+   "type": 0,
+   "details": "Hello there",
+   "state": "",
+   "timestamps": false
+  }
+ }
+]

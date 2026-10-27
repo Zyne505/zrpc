@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Soft shadow under the Z -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M36,38H68V46L47,66H68V74H36V66L57,46H36Z" />
+    <!-- The Z -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,36H67V44L46,64H67V72H35V64L56,44H35Z" />
+    <!-- Presence dot with a status-style cutout ring -->
+    <path
+        android:fillColor="#23A55A"
+        android:strokeColor="#3A2FC4"
+        android:strokeWidth="3.5"
+        android:pathData="M73,68m-7.5,0a7.5,7.5 0,1 1,15 0a7.5,7.5 0,1 1,-15 0" />
+</vector>
