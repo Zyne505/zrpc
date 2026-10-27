@@ -3,7 +3,6 @@ package io.github.zrpc.ui.about
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +23,7 @@ fun AboutScreen(onBack: () -> Unit) {
         ScreenColumn(padding) {
             Text("Zrpc ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleLarge)
             Text(
-                "A from-scratch rewrite of a Discord Rich Presence manager for Android, built around protecting your token.",
+                "A custom Discord Rich Presence app for Android, built around protecting your token.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             InfoCard(
@@ -33,15 +32,11 @@ fun AboutScreen(onBack: () -> Unit) {
                     "no redirects) · user-installed CAs not trusted · never logged, backed up or included in crash reports · " +
                     "login session wiped after sign-in · biometric gate for reveal/copy · optional app lock and FLAG_SECURE.",
             )
-            InfoCard(
-                Icons.Filled.Favorite, "Credits",
-                "Inspired by Kizzy by dead8309 (GPL-3.0). This project shares no code with it and is not affiliated with it or with Discord.",
-            )
-            TextButton(onClick = { open("https://github.com/dead8309/Kizzy") }) { Text("Original Kizzy on GitHub") }
+            TextButton(onClick = { open("https://github.com/Zyne505/zrpc") }) { Text("Source code on GitHub") }
             InfoCard(
                 Icons.Filled.Gavel, "Disclaimer",
-                "Using a user token on the gateway goes against Discord's Terms of Service. Use at your own risk. " +
-                    "Licensed under GPL-3.0.",
+                "Not affiliated with Discord. Using a user token on the gateway goes against Discord's Terms of Service. " +
+                    "Use at your own risk. Licensed under GPL-3.0.",
             )
         }
     }

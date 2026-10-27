@@ -28,7 +28,7 @@ interface TokenCipher {
  * The raw key never exists in app memory or on disk; StrongBox (a separate
  * secure chip) is used when the device has one.
  */
-class KeystoreTokenCipher(private val alias: String = "kizzy_token_key_v1") : TokenCipher {
+class KeystoreTokenCipher(private val alias: String = "zrpc_token_key_v1") : TokenCipher {
 
     private val keyStore: KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
     @Volatile private var strongBox: Boolean = false

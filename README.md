@@ -2,9 +2,9 @@
 
 # Zrpc
 
-A from-scratch Discord Rich Presence manager for Android, written in Kotlin with Jetpack Compose and Material 3, built around **protecting your Discord token**.
+A custom Discord Rich Presence app for Android, written in Kotlin with Jetpack Compose and Material 3, built around **protecting your Discord token**.
 
-Inspired by [Kizzy](https://github.com/dead8309/Kizzy) by dead8309. This is an independent rewrite: no code is shared with the original, and it is not affiliated with it or with Discord.
+Not affiliated with Discord.
 
 > **Warning**
 > This app connects to the Discord gateway with your **user token**. Discord's Terms of Service treat that as self-botting. Presence-only use is rarely actioned, but use it at your own risk.
