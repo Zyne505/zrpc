@@ -26,7 +26,9 @@ import io.github.zrpc.discord.model.Presence
 import io.github.zrpc.log.AppLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -47,6 +49,8 @@ class RpcService : LifecycleService() {
     private var mode: RpcMode? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var netCallback: ConnectivityManager.NetworkCallback? = null
+    /** Last default network seen; only touched on the ConnectivityManager callback thread. */
+    @Volatile private var lastNetwork: Network? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +69,14 @@ class RpcService : LifecycleService() {
         }
         lifecycleScope.launch {
             container.settings.settings.collect { latestSettings = it; applyWakeLock(it.wakeLock) }
+        }
+        // The wake lock has a timeout (lint-friendly); keep extending it so a
+        // long session doesn't silently lose it after a few hours.
+        lifecycleScope.launch {
+            while (isActive) {
+                delay(WAKE_LOCK_RENEW_MS)
+                applyWakeLock(latestSettings.wakeLock)
+            }
         }
         lifecycleScope.launch {
             gateway.state.collect {
@@ -101,6 +113,10 @@ class RpcService : LifecycleService() {
     private fun run(newMode: RpcMode) {
         mode = newMode
         container.controller.setMode(newMode)
+        // The settings collector may have run before `mode` was set, in which
+        // case applyWakeLock() ignored it. Apply again now that we're active.
+        applyWakeLock(latestSettings.wakeLock)
+        logBatteryState()
         modeJob?.cancel()
         gateway.start()
         AppLog.i(TAG, "${newMode.title} started")
@@ -150,6 +166,9 @@ class RpcService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        // Covers destruction that didn't go through stopEverything(); stop() is
+        // idempotent and survives lifecycleScope being cancelled below.
+        gateway.stop()
         netCallback?.let { runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) } }
         applyWakeLock(false)
         container.controller.setMode(null)
@@ -161,7 +180,18 @@ class RpcService : LifecycleService() {
 
     private fun registerNetworkCallback() {
         val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) = gateway.nudge()
+            // Called once on registration and again whenever the *default*
+            // network changes. A different Network object means the existing
+            // socket is bound to a network we're leaving.
+            override fun onAvailable(network: Network) {
+                val previous = lastNetwork
+                lastNetwork = network
+                if (previous != null && previous != network) gateway.networkChanged() else gateway.nudge()
+            }
+
+            override fun onLost(network: Network) {
+                if (network == lastNetwork) AppLog.w(TAG, "Default network lost")
+            }
         }
         runCatching { getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(cb) }
             .onSuccess { netCallback = cb }
@@ -169,13 +199,27 @@ class RpcService : LifecycleService() {
 
     private fun applyWakeLock(on: Boolean) {
         if (on && mode != null) {
-            if (wakeLock?.isHeld == true) return
-            wakeLock = getSystemService(PowerManager::class.java)
+            val wl = wakeLock ?: getSystemService(PowerManager::class.java)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Zrpc:gateway")
-                .apply { setReferenceCounted(false); acquire(6 * 60 * 60 * 1000L) }
-        } else {
+                .apply { setReferenceCounted(false) }
+                .also { wakeLock = it; AppLog.i(TAG, "Wake lock on") }
+            // Not reference-counted, so acquiring again just extends the timeout.
+            wl.acquire(WAKE_LOCK_TIMEOUT_MS)
+        } else if (wakeLock != null) {
             wakeLock?.takeIf { it.isHeld }?.release()
             wakeLock = null
+            AppLog.i(TAG, "Wake lock off")
+        }
+    }
+
+    /** Records the power state that most often explains heartbeats missed with the screen off. */
+    private fun logBatteryState() {
+        val pm = getSystemService(PowerManager::class.java) ?: return
+        val exempt = runCatching { pm.isIgnoringBatteryOptimizations(packageName) }.getOrDefault(false)
+        AppLog.i(TAG, "Battery optimization exempt=$exempt, wake lock=${latestSettings.wakeLock}, power saver=${pm.isPowerSaveMode}")
+        if (!exempt && !latestSettings.wakeLock) {
+            AppLog.w(TAG, "With the screen off the CPU may sleep through heartbeats and Discord will drop the session. " +
+                "Turn on the wake lock setting or allow Zrpc to run unrestricted in battery settings.")
         }
     }
 
@@ -227,5 +271,7 @@ class RpcService : LifecycleService() {
         private const val CHANNEL = "rpc"
         private const val NOTIF_ID = 42
         private const val TAG = "RpcService"
+        private const val WAKE_LOCK_TIMEOUT_MS = 6 * 60 * 60 * 1000L
+        private const val WAKE_LOCK_RENEW_MS = 60 * 60 * 1000L
     }
 }
