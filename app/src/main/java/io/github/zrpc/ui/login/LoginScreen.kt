@@ -3,9 +3,16 @@ package io.github.zrpc.ui.login
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.net.Uri
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,8 +27,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -31,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +51,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,6 +64,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import io.github.zrpc.discord.HttpException
@@ -244,49 +256,141 @@ private fun PasteStep(busy: Boolean, error: String?, onSubmit: (String) -> Unit)
 private fun DiscordWebLogin(onToken: (String, WebView) -> Unit) {
     val scope = rememberCoroutineScope()
     var delivered by remember { mutableStateOf(false) }
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { ctx ->
-            WebSessionWiper.wipe(ctx) // start from a clean session
-            WebView(ctx).apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.allowFileAccess = false
-                settings.allowContentAccess = false
-                settings.javaScriptCanOpenWindowsAutomatically = false
-                settings.setSupportMultipleWindows(false)
-                settings.setGeolocationEnabled(false)
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                        // Block top-level navigation away from Discord (phishing, ads, external links).
-                        return !(request.url.scheme == "https" && DiscordHosts.isTrusted(request.url.host.orEmpty()))
+    var progress by remember { mutableIntStateOf(0) }
+    var loadError by remember { mutableStateOf<String?>(null) }
+    var canGoBack by remember { mutableStateOf(false) }
+    var webView by remember { mutableStateOf<WebView?>(null) }
+
+    /** Wipe first, and only load once the wipe has really finished (cookie removal is async). */
+    fun loadClean(view: WebView) {
+        loadError = null
+        progress = 0
+        WebSessionWiper.wipe(view.context, view) {
+            view.loadUrl(DISCORD_LOGIN_URL)
+        }
+    }
+
+    // System back moves back inside Discord's flow (e.g. 2FA -> login) before leaving it.
+    BackHandler(enabled = canGoBack) { webView?.goBack() }
+
+    // Leaving the login page without finishing: don't leave a half-logged-in session behind.
+    DisposableEffect(Unit) {
+        onDispose {
+            webView?.let { view ->
+                if (!delivered) {
+                    WebSessionWiper.wipe(view.context, view)
+                    view.destroy()
+                }
+            }
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                WebView(ctx).apply {
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    )
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
+                    settings.javaScriptCanOpenWindowsAutomatically = false
+                    settings.setSupportMultipleWindows(false)
+                    settings.setGeolocationEnabled(false)
+                    // The default WebView user agent ("; wv") gets the login page stuck or blank
+                    // (Discord / Cloudflare / hCaptcha treat embedded WebViews differently).
+                    // Present as regular Chrome for Android instead.
+                    settings.userAgentString = WebSettings.getDefaultUserAgent(ctx)
+                        .replace("; wv", "")
+                        .replace(Regex(" Version/\\d+(\\.\\d+)*"), "")
+                    // hCaptcha runs in a third-party iframe and needs its own cookies, or the
+                    // captcha never finishes. Only this WebView, and it is wiped after login.
+                    CookieManager.getInstance().setAcceptCookie(true)
+                    CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onProgressChanged(view: WebView, newProgress: Int) {
+                            progress = newProgress
+                        }
                     }
+                    webViewClient = object : WebViewClient() {
+                        override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                            if (request.isForMainFrame) {
+                                loadError = "Couldn't load Discord (${error.description}). Check your connection and try again."
+                                AppLog.w("Login", "Login page failed to load: ${error.errorCode}")
+                            }
+                        }
 
-                    override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-                        if (!isTrustedPage(url)) view.stopLoading()
-                    }
+                        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                            // Block top-level navigation away from Discord (phishing, ads, external links).
+                            return !(request.url.scheme == "https" && DiscordHosts.isTrusted(request.url.host.orEmpty()))
+                        }
 
-                    override fun onPageFinished(view: WebView, url: String?) = check(view, url)
-                    override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) = check(view, url)
+                        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                            if (!isTrustedPage(url)) view.stopLoading()
+                        }
 
-                    private fun check(view: WebView, url: String?) {
-                        if (delivered || !isTrustedPage(url)) return
-                        val path = Uri.parse(url).path.orEmpty()
-                        if (path.startsWith("/app") || path.startsWith("/channels")) {
-                            extract(view, scope) { token ->
-                                if (!delivered) {
-                                    delivered = true
-                                    onToken(token, view)
+                        override fun onPageFinished(view: WebView, url: String?) = check(view, url)
+                        override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                            canGoBack = view.canGoBack()
+                            check(view, url)
+                        }
+
+                        private fun check(view: WebView, url: String?) {
+                            if (delivered || !isTrustedPage(url)) return
+                            val path = Uri.parse(url).path.orEmpty()
+                            if (path.startsWith("/app") || path.startsWith("/channels")) {
+                                extract(view, scope) { token ->
+                                    if (!delivered) {
+                                        delivered = true
+                                        onToken(token, view)
+                                    }
                                 }
                             }
                         }
                     }
+                    webView = this
+                    loadClean(this) // start from a clean session
                 }
-                loadUrl("https://discord.com/login")
+            },
+        )
+
+        // Thin progress bar while Discord loads, so a slow page doesn't look like a blank one.
+        if (progress < 100 && loadError == null) {
+            LinearProgressIndicator(
+                progress = { progress / 100f },
+                modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+            )
+        }
+
+        loadError?.let { message ->
+            Column(
+                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(Icons.Filled.CloudOff, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Discord didn't load", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Button(onClick = { webView?.let { loadClean(it) } }) {
+                    Icon(Icons.Filled.Refresh, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Try again")
+                }
             }
-        },
-    )
+        }
+    }
 }
+
+private const val DISCORD_LOGIN_URL = "https://discord.com/login"
 
 private fun isTrustedPage(url: String?): Boolean {
     val u = url?.let { runCatching { Uri.parse(it) }.getOrNull() } ?: return false

@@ -19,7 +19,13 @@ import android.webkit.WebViewDatabase
  * form data, HTTP auth). The vault becomes the token's only home.
  */
 object WebSessionWiper {
-    fun wipe(context: Context, webView: WebView? = null) {
+    /**
+     * @param onDone called on the main thread once cookies are actually gone.
+     *   Cookie removal is asynchronous, so anything that loads a page right
+     *   after a wipe must wait for this, or the wipe can delete the cookies
+     *   the freshly loading page just set (Cloudflare's, for example).
+     */
+    fun wipe(context: Context, webView: WebView? = null, onDone: (() -> Unit)? = null) {
         webView?.apply {
             stopLoading()
             clearCache(true)
@@ -27,16 +33,17 @@ object WebSessionWiper {
             clearFormData()
             clearSslPreferences()
         }
-        CookieManager.getInstance().apply {
-            removeAllCookies(null)
-            flush()
-        }
         WebStorage.getInstance().deleteAllData()
         runCatching {
             WebViewDatabase.getInstance(context).apply {
                 clearHttpAuthUsernamePassword()
                 @Suppress("DEPRECATION") clearFormData()
             }
+        }
+        val cookies = CookieManager.getInstance()
+        cookies.removeAllCookies {
+            cookies.flush()
+            onDone?.invoke()
         }
     }
 }
