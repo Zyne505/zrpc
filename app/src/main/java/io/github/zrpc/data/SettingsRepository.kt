@@ -42,7 +42,8 @@ data class AppSettings(
     val dynamicColor: Boolean = true,
     val appLock: Boolean = false,
     val secureEverywhere: Boolean = false,
-    val applicationId: String = "",
+    /** Never blank: falls back to Zrpc's built-in Discord application, like Kizzy does. */
+    val applicationId: String = DEFAULT_APPLICATION_ID,
     val status: String = "online",
     val gatewayClient: String = "ANDROID",
     val allowImageUpload: Boolean = false,
@@ -57,7 +58,12 @@ data class AppSettings(
     val lastCustom: RpcConfig = RpcConfig(),
     val console: ConsoleConfig = ConsoleConfig(),
     val experimental: ExperimentalConfig = ExperimentalConfig(),
-)
+) {
+    companion object {
+        /** Zrpc's own Discord application. Used for images whenever the user hasn't set their own ID. */
+        const val DEFAULT_APPLICATION_ID = "1564961954731397310"
+    }
+}
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -91,7 +97,7 @@ class SettingsRepository(private val context: Context) {
             dynamicColor = p[K.dynamic] ?: d.dynamicColor,
             appLock = p[K.appLock] ?: d.appLock,
             secureEverywhere = p[K.secureAll] ?: d.secureEverywhere,
-            applicationId = p[K.appId] ?: d.applicationId,
+            applicationId = p[K.appId]?.takeIf { it.isNotBlank() } ?: d.applicationId,
             status = p[K.status] ?: d.status,
             gatewayClient = p[K.client] ?: d.gatewayClient,
             allowImageUpload = p[K.upload] ?: d.allowImageUpload,

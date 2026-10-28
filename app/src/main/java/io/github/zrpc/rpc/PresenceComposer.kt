@@ -153,13 +153,12 @@ class PresenceComposer(
     private suspend fun image(input: String, appId: String?, s: AppSettings): String? {
         val v = input.trim()
         if (v.startsWith("content://")) {
-            if (!s.allowImageUpload) {
-                AppLog.w(TAG, "Gallery images need 'Allow image uploads' in Settings")
-                return null
-            }
+            // Picking a gallery image is an explicit choice to share it, so it is
+            // uploaded directly (same as Kizzy). The upload toggle still guards
+            // automatic uploads (app icons, album art).
             val bytes = withContext(Dispatchers.IO) {
                 runCatching { context.contentResolver.openInputStream(Uri.parse(v))?.use { it.readBytes() } }.getOrNull()
-            } ?: return null
+            } ?: run { AppLog.w(TAG, "Couldn't read the gallery image, pick it again"); return null }
             if (bytes.size > MAX_UPLOAD) {
                 AppLog.w(TAG, "Image too large (max 8 MB)")
                 return null
@@ -167,7 +166,7 @@ class PresenceComposer(
             val mime = context.contentResolver.getType(Uri.parse(v)) ?: "image/png"
             val ext = mime.substringAfter('/', "png")
             val url = imageHost.upload(bytes, mime, "image.$ext") ?: return null
-            return resolver.resolve(url, appId)
+            return resolver.resolve(url, appId).also { if (it == null) AppLog.w(TAG, "Discord couldn't proxy the gallery image") }
         }
         return resolver.resolve(v, appId)
     }

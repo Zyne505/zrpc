@@ -49,7 +49,8 @@ fun SettingsScreen(s: AppSettings, onBack: () -> Unit, openAbout: () -> Unit) {
     val ctx = LocalContext.current
     val activity = ctx.findActivity() as? FragmentActivity
     val scope = rememberCoroutineScope()
-    var appId by remember { mutableStateOf(s.applicationId) }
+    val customAppId = s.applicationId.takeUnless { it == AppSettings.DEFAULT_APPLICATION_ID }.orEmpty()
+    var appId by remember { mutableStateOf(customAppId) }
     val appIdValid = appId.isBlank() || appId.matches(ActivityBuilder.SNOWFLAKE)
 
     ZrpcScaffold(title = "Settings", onBack = onBack) { padding ->
@@ -59,17 +60,17 @@ fun SettingsScreen(s: AppSettings, onBack: () -> Unit, openAbout: () -> Unit) {
                 OutlinedTextField(
                     value = appId,
                     onValueChange = { appId = it.filter(Char::isDigit) },
-                    label = { Text("Application ID") },
+                    label = { Text("Application ID (optional)") },
                     singleLine = true,
                     isError = !appIdValid,
-                    supportingText = { Text("Needed for images. Create one free at discord.com/developers/applications") },
+                    supportingText = { Text("Leave empty to use Zrpc's built-in app. Set your own from discord.com/developers/applications") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilledTonalButton(
                         onClick = { scope.launch { repo.setApplicationId(appId); container.assetResolver.clear() }; Toast.makeText(ctx, "Saved", Toast.LENGTH_SHORT).show() },
-                        enabled = appIdValid && appId != s.applicationId,
+                        enabled = appIdValid && appId != customAppId,
                     ) { Text("Save") }
                     TextButton(onClick = {
                         ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.com/developers/applications")))
@@ -110,8 +111,8 @@ fun SettingsScreen(s: AppSettings, onBack: () -> Unit, openAbout: () -> Unit) {
             SectionCard {
                 SwitchRow(
                     "Allow image uploads",
-                    "Gallery images, app icons and album art are uploaded to catbox.moe so Discord can show them. " +
-                        "Uploads are PUBLIC and never include your token.",
+                    "App icons and album art are uploaded to catbox.moe automatically so Discord can show them. " +
+                        "Gallery images you pick are always uploaded. Uploads are PUBLIC and never include your token.",
                     s.allowImageUpload,
                 ) { scope.launch { repo.setAllowImageUpload(it) } }
                 SwitchRow(

@@ -98,7 +98,6 @@ fun CustomRpcScreen(settings: AppSettings, onBack: () -> Unit) {
         if (uri != null) {
             runCatching { ctx.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
             cfg = if (pickTarget == "large") cfg.copy(largeImage = uri.toString()) else cfg.copy(smallImage = uri.toString())
-            if (!settings.allowImageUpload) toast("Enable 'Allow image uploads' in Settings to use gallery images")
         }
     }
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -184,21 +183,6 @@ fun CustomRpcScreen(settings: AppSettings, onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                val hasGalleryImage = cfg.largeImage.startsWith("content://") || cfg.smallImage.startsWith("content://")
-                if (hasGalleryImage && !settings.allowImageUpload) {
-                    Text(
-                        "⚠ Gallery images need \"Allow image uploads\" enabled in Settings",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                if (hasGalleryImage && cfg.applicationId.ifBlank { settings.applicationId }.isBlank()) {
-                    Text(
-                        "⚠ Gallery images also require an Application ID — set one in Settings or in the Advanced section below",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
                 ImageField("Large image", cfg.largeImage, onPick = { pickTarget = "large"; picker.launch(arrayOf("image/*")) }) { cfg = cfg.copy(largeImage = it) }
                 Field("Large image text", cfg.largeText) { cfg = cfg.copy(largeText = it) }
                 ImageField("Small image", cfg.smallImage, onPick = { pickTarget = "small"; picker.launch(arrayOf("image/*")) }) { cfg = cfg.copy(smallImage = it) }
