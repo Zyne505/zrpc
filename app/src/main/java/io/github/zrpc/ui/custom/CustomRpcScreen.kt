@@ -125,7 +125,10 @@ fun CustomRpcScreen(settings: AppSettings, onBack: () -> Unit) {
 
     val appId = cfg.applicationId.ifBlank { settings.applicationId }
     val previewActivity = remember(cfg, appId) {
-        ActivityBuilder.build(cfg, ResolvedImages(cfg.largeImage.ifBlank { null }, cfg.smallImage.ifBlank { null }), appId)
+        // content:// URIs load locally via Coil but Discord can't render them — show placeholder in preview
+        val previewLarge = cfg.largeImage.ifBlank { null }?.takeUnless { it.startsWith("content://") }
+        val previewSmall = cfg.smallImage.ifBlank { null }?.takeUnless { it.startsWith("content://") }
+        ActivityBuilder.build(cfg, ResolvedImages(previewLarge, previewSmall), appId)
     }
 
     ZrpcScaffold(
@@ -181,6 +184,21 @@ fun CustomRpcScreen(settings: AppSettings, onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                val hasGalleryImage = cfg.largeImage.startsWith("content://") || cfg.smallImage.startsWith("content://")
+                if (hasGalleryImage && !settings.allowImageUpload) {
+                    Text(
+                        "⚠ Gallery images need \"Allow image uploads\" enabled in Settings",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                if (hasGalleryImage && cfg.applicationId.ifBlank { settings.applicationId }.isBlank()) {
+                    Text(
+                        "⚠ Gallery images also require an Application ID — set one in Settings or in the Advanced section below",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 ImageField("Large image", cfg.largeImage, onPick = { pickTarget = "large"; picker.launch(arrayOf("image/*")) }) { cfg = cfg.copy(largeImage = it) }
                 Field("Large image text", cfg.largeText) { cfg = cfg.copy(largeText = it) }
                 ImageField("Small image", cfg.smallImage, onPick = { pickTarget = "small"; picker.launch(arrayOf("image/*")) }) { cfg = cfg.copy(smallImage = it) }

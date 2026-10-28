@@ -124,7 +124,7 @@ class RpcService : LifecycleService() {
         val settings = container.settings.settings
         val composer = container.composer
         val activities: Flow<Activity?> = when (newMode) {
-            RpcMode.CUSTOM -> settings.distinctUntilChanged { a, b -> a.lastCustom == b.lastCustom && a.applicationId == b.applicationId }
+            RpcMode.CUSTOM -> settings.distinctUntilChanged { a, b -> a.lastCustom == b.lastCustom && a.applicationId == b.applicationId && a.allowImageUpload == b.allowImageUpload }
                 .mapLatest { composer.custom(it.lastCustom, it) }
             RpcMode.CONSOLE -> settings.distinctUntilChanged { a, b -> a.console == b.console && a.applicationId == b.applicationId }
                 .mapLatest { composer.console(it.console, it) }
