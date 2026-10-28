@@ -124,10 +124,8 @@ fun CustomRpcScreen(settings: AppSettings, onBack: () -> Unit) {
 
     val appId = cfg.applicationId.ifBlank { settings.applicationId }
     val previewActivity = remember(cfg, appId) {
-        // content:// URIs load locally via Coil but Discord can't render them — show placeholder in preview
-        val previewLarge = cfg.largeImage.ifBlank { null }?.takeUnless { it.startsWith("content://") }
-        val previewSmall = cfg.smallImage.ifBlank { null }?.takeUnless { it.startsWith("content://") }
-        ActivityBuilder.build(cfg, ResolvedImages(previewLarge, previewSmall), appId)
+        // Gallery images (content://) are shown straight from the phone; they're uploaded when the presence starts.
+        ActivityBuilder.build(cfg, ResolvedImages(cfg.largeImage.ifBlank { null }, cfg.smallImage.ifBlank { null }), appId)
     }
 
     ZrpcScaffold(
